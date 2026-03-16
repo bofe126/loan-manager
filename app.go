@@ -12,9 +12,10 @@ import (
 
 // App struct
 type App struct {
-	ctx            context.Context
-	loanService    *services.LoanService
-	paymentService *services.PaymentService
+	ctx               context.Context
+	loanService       *services.LoanService
+	paymentService    *services.PaymentService
+	calculatorService *services.CalculatorService
 }
 
 // NewApp creates a new App application struct
@@ -49,6 +50,7 @@ func (a *App) startup(ctx context.Context) {
 	db := database.GetDB()
 	a.loanService = services.NewLoanService(db)
 	a.paymentService = services.NewPaymentService(db)
+	a.calculatorService = services.NewCalculatorService()
 }
 
 // GetAllLoans 获取所有贷款
@@ -84,4 +86,18 @@ func (a *App) MakePayment(loanID uint, amount float64, paymentDateStr string) er
 		return err
 	}
 	return a.paymentService.MakePayment(loanID, amount, paymentDate)
+}
+
+// GetPaymentSchedule 获取还款计划表
+func (a *App) GetPaymentSchedule(loanID uint) ([]services.PaymentDetail, error) {
+	// 获取贷款信息
+	loan, err := a.loanService.GetLoanByID(loanID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 生成还款计划
+	now := time.Now()
+	schedule := a.calculatorService.GeneratePaymentSchedule(*loan, now)
+	return schedule, nil
 }

@@ -89,18 +89,9 @@ const totalMonthlyPayment = computed(() => {
 });
 
 const totalRemainingAmount = computed(() => {
-  const now = new Date();
   return loans.value.reduce((sum, loan) => {
     if (loan.status === 'active') {
-      const remaining = calculateRemainingAmount(
-        loan.amount,
-        loan.interest_rate,
-        new Date(loan.start_date),
-        new Date(loan.end_date),
-        loan.payment_method as any,
-        now
-      );
-      return sum + remaining;
+      return sum + loan.remaining_amount;
     }
     return sum;
   }, 0);

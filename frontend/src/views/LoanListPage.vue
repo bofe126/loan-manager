@@ -6,6 +6,7 @@
       @edit="handleEdit"
       @delete="handleDelete"
       @payment="handlePayment"
+      @schedule="handleSchedule"
     />
 
     <PaymentModal
@@ -14,6 +15,12 @@
       :loading="paymentLoading"
       @close="showPaymentModal = false"
       @submit="handlePaymentSubmit"
+    />
+
+    <ScheduleModal
+      :show="showScheduleModal"
+      :loan-id="selectedLoanId"
+      @close="showScheduleModal = false"
     />
   </div>
 </template>
@@ -25,11 +32,13 @@ import { useLoans } from '../composables/useLoans';
 import { MakePayment } from '../../wailsjs/go/main/App';
 import LoanList from '../components/LoanList.vue';
 import PaymentModal from '../components/PaymentModal.vue';
+import ScheduleModal from '../components/ScheduleModal.vue';
 
 const router = useRouter();
 const { loans, loading, loadLoans, deleteLoan } = useLoans();
 
 const showPaymentModal = ref(false);
+const showScheduleModal = ref(false);
 const selectedLoanId = ref<number | null>(null);
 const paymentLoading = ref(false);
 
@@ -48,6 +57,11 @@ const handleDelete = async (id: number) => {
 const handlePayment = (id: number) => {
   selectedLoanId.value = id;
   showPaymentModal.value = true;
+};
+
+const handleSchedule = (id: number) => {
+  selectedLoanId.value = id;
+  showScheduleModal.value = true;
 };
 
 const handlePaymentSubmit = async (loanId: number, amount: number, paymentDate: string) => {

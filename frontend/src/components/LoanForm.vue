@@ -1,7 +1,12 @@
 <template>
   <div class="card">
     <div class="card-body">
-      <h5 class="card-title">{{ title }}</h5>
+      <div class="card-header-section">
+        <h5 class="card-title">{{ title }}</h5>
+        <div v-if="isEditMode && formData.remaining_amount > 0" class="remaining-amount-badge">
+          贷款余额：¥{{ formData.remaining_amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }}
+        </div>
+      </div>
       <form @submit.prevent="handleSubmit">
         <div class="form-grid">
           <div class="form-group">
@@ -25,9 +30,9 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">贷款金额（元）</label>
+            <label class="form-label">贷款总金额（元）</label>
             <input
-              v-model.number="formData.amount"
+              v-model.number="formData.total_amount"
               type="number"
               step="0.01"
               class="form-control"
@@ -71,6 +76,16 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label">第一期还款日期</label>
+            <input
+              v-model="formData.first_payment_date"
+              type="date"
+              class="form-control"
+              placeholder="可选，默认为开始日期的下个月"
+            />
+          </div>
+
+          <div class="form-group">
             <label class="form-label">每月还款日</label>
             <input
               v-model.number="formData.payment_date"
@@ -107,7 +122,7 @@
         </div>
 
         <div v-if="previewMonthlyPayment > 0" class="preview-box">
-          <span class="preview-label">预计月供</span>
+          <span class="preview-label">{{ isEditMode ? '当前月供' : '预计月供' }}</span>
           <span class="preview-value">¥{{ Math.round(previewMonthlyPayment).toLocaleString('zh-CN') }}</span>
         </div>
 
@@ -155,30 +170,37 @@ const { calculateMonthlyPayment } = useLoanCalculator();
 const formData = ref({
   borrower_name: '',
   bank_name: '',
-  amount: 0,
+  total_amount: 0,
+  remaining_amount: 0,
   interest_rate: 0,
   start_date: '',
   end_date: '',
+  first_payment_date: '',
   payment_date: 1,
   payment_method: '等额本息',
   status: 'active',
 });
 
 const previewMonthlyPayment = ref(0);
+const isEditMode = ref(false);
 
 // 初始化表单数据
 onMounted(() => {
   if (props.initialData) {
+    isEditMode.value = true;
     const startDate = props.initialData.start_date ? new Date(props.initialData.start_date).toISOString().split('T')[0] : '';
     const endDate = props.initialData.end_date ? new Date(props.initialData.end_date).toISOString().split('T')[0] : '';
+    const firstPaymentDate = props.initialData.first_payment_date ? new Date(props.initialData.first_payment_date).toISOString().split('T')[0] : '';
 
     formData.value = {
       borrower_name: props.initialData.borrower_name,
       bank_name: props.initialData.bank_name,
-      amount: props.initialData.amount,
+      total_amount: props.initialData.total_amount || 0,
+      remaining_amount: props.initialData.remaining_amount || 0,
       interest_rate: props.initialData.interest_rate,
       start_date: startDate,
       end_date: endDate,
+      first_payment_date: firstPaymentDate,
       payment_date: props.initialData.payment_date,
       payment_method: props.initialData.payment_method,
       status: props.initialData.status,
@@ -190,7 +212,7 @@ onMounted(() => {
 // 更新预览
 const updatePreview = () => {
   if (
-    formData.value.amount > 0 &&
+    formData.value.total_amount > 0 &&
     formData.value.interest_rate > 0 &&
     formData.value.start_date &&
     formData.value.end_date
@@ -198,10 +220,18 @@ const updatePreview = () => {
     const startDate = new Date(formData.value.start_date);
     const endDate = new Date(formData.value.end_date);
 
+    // 编辑模式下使用剩余金额，新建模式下使用总金额
+    const amount = isEditMode.value && formData.value.remaining_amount > 0
+      ? formData.value.remaining_amount
+      : formData.value.total_amount;
+
+    // 编辑模式下使用当前日期作为起始日期
+    const calcStartDate = isEditMode.value ? new Date() : startDate;
+
     previewMonthlyPayment.value = calculateMonthlyPayment(
-      formData.value.amount,
+      amount,
       formData.value.interest_rate,
-      startDate,
+      calcStartDate,
       endDate,
       formData.value.payment_method as any
     );
@@ -215,6 +245,11 @@ const handleSubmit = () => {
     start_date: new Date(formData.value.start_date).toISOString(),
     end_date: new Date(formData.value.end_date).toISOString(),
   };
+
+  // 如果有第一期还款日期，转换为ISO格式
+  if (formData.value.first_payment_date) {
+    submitData.first_payment_date = new Date(formData.value.first_payment_date).toISOString();
+  }
 
   if (props.initialData) {
     submitData.id = props.initialData.id;
@@ -231,6 +266,11 @@ const handleSubmitAndNew = () => {
     end_date: new Date(formData.value.end_date).toISOString(),
   };
 
+  // 如果有第一期还款日期，转换为ISO格式
+  if (formData.value.first_payment_date) {
+    submitData.first_payment_date = new Date(formData.value.first_payment_date).toISOString();
+  }
+
   if (props.initialData) {
     submitData.id = props.initialData.id;
   }
@@ -245,11 +285,29 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
+.card-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
 .card-title {
   font-size: 1.125rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
+  margin: 0;
   color: var(--text-primary);
+}
+
+.remaining-amount-badge {
+  padding: 0.5rem 1rem;
+  background: rgba(0, 128, 255, 0.1);
+  border: 1px solid rgba(0, 128, 255, 0.3);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0080ff;
+  font-family: var(--font-mono);
 }
 
 .form-grid {

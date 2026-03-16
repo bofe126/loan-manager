@@ -2,10 +2,12 @@ export interface Loan {
   id: number;
   borrower_name: string;
   bank_name: string;
-  amount: number;
+  total_amount: number;
+  remaining_amount: number;
   interest_rate: number;
   start_date: string;
   end_date: string;
+  first_payment_date?: string;
   payment_date: number;
   status: LoanStatus;
   payment_method: PaymentMethod;

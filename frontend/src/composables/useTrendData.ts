@@ -21,39 +21,55 @@ export function useTrendData() {
       let totalRemaining = 0;
 
       loans.forEach((loan) => {
+        if (loan.status !== 'active') return;
+
         const startDate = new Date(loan.start_date);
         const endDate = new Date(loan.end_date);
 
         // 检查贷款是否在此月份内有效
-        if (futureDate >= startDate && futureDate <= endDate) {
+        if (futureDate >= now && futureDate <= endDate) {
+          // 使用当前的月供（已经考虑了提前还款）
           totalMonthlyPayment += loan.monthly_payment;
 
-          // 计算该月的剩余金额
-          const monthsPassed = calculateLoanMonths(startDate, futureDate);
-          const totalMonths = calculateLoanMonths(startDate, endDate);
+          // 计算该月的剩余金额（从当前余额开始计算）
+          const monthsFromNow = calculateLoanMonths(now, futureDate);
+          const remainingMonthsTotal = calculateLoanMonths(now, endDate);
           const monthlyRate = calculateMonthlyRate(loan.interest_rate);
 
+          // 使用当前剩余金额作为起点
+          const currentRemaining = loan.remaining_amount || loan.total_amount;
           let remaining = 0;
 
-          switch (loan.payment_method as PaymentMethod) {
-            case '等额本息': {
-              if (monthlyRate === 0) {
-                remaining = (loan.amount * (totalMonths - monthsPassed)) / totalMonths;
-              } else {
-                const powTotal = Math.pow(1 + monthlyRate, totalMonths);
-                const powPassed = Math.pow(1 + monthlyRate, monthsPassed);
-                remaining = (loan.amount * (powTotal - powPassed)) / (powTotal - 1);
+          if (monthsFromNow === 0) {
+            // 当前月份，使用当前余额
+            remaining = currentRemaining;
+          } else {
+            // 未来月份，基于当前余额计算
+            switch (loan.payment_method as PaymentMethod) {
+              case '等额本息': {
+                if (monthlyRate === 0) {
+                  remaining = (currentRemaining * (remainingMonthsTotal - monthsFromNow)) / remainingMonthsTotal;
+                } else {
+                  const powTotal = Math.pow(1 + monthlyRate, remainingMonthsTotal);
+                  const powPassed = Math.pow(1 + monthlyRate, monthsFromNow);
+                  remaining = (currentRemaining * (powTotal - powPassed)) / (powTotal - 1);
+                }
+                break;
               }
-              break;
-            }
-            case '等额本金': {
-              const principalPerMonth = loan.amount / totalMonths;
-              remaining = loan.amount - principalPerMonth * monthsPassed;
-              break;
-            }
-            case '先息后本': {
-              remaining = loan.amount;
-              break;
+              case '等额本金': {
+                const principalPerMonth = currentRemaining / remainingMonthsTotal;
+                remaining = currentRemaining - principalPerMonth * monthsFromNow;
+                break;
+              }
+              case '先息后本': {
+                // 先息后本：最后一个月才还本金
+                if (monthsFromNow >= remainingMonthsTotal) {
+                  remaining = 0;
+                } else {
+                  remaining = currentRemaining;
+                }
+                break;
+              }
             }
           }
 
