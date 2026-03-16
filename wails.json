@@ -1,0 +1,13 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "loan-manager-wails",
+  "outputfilename": "loan-manager-wails",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "bofe126",
+    "email": "92085151+bofe126@users.noreply.github.com"
+  }
+}
