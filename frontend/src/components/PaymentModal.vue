@@ -28,6 +28,15 @@
                 min="0.01"
               />
             </div>
+            <div class="mb-3">
+              <label class="form-label">还款时间</label>
+              <input
+                v-model="paymentDate"
+                type="date"
+                class="form-control"
+                required
+              />
+            </div>
             <div v-if="error" class="alert alert-danger">{{ error }}</div>
           </form>
         </div>
@@ -69,7 +78,7 @@ interface Props {
 
 interface Emits {
   (e: 'close'): void;
-  (e: 'submit', loanId: number, amount: number): void;
+  (e: 'submit', loanId: number, amount: number, paymentDate: string): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -79,6 +88,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 
 const amount = ref(0);
+const paymentDate = ref('');
 const error = ref<string | null>(null);
 
 watch(
@@ -86,6 +96,8 @@ watch(
   (newVal) => {
     if (newVal) {
       amount.value = 0;
+      // 默认设置为今天
+      paymentDate.value = new Date().toISOString().split('T')[0];
       error.value = null;
     }
   }
@@ -104,7 +116,12 @@ const handleSubmit = () => {
     return;
   }
 
-  emit('submit', props.loanId, amount.value);
+  if (!paymentDate.value) {
+    error.value = '请选择还款时间';
+    return;
+  }
+
+  emit('submit', props.loanId, amount.value, paymentDate.value);
 };
 </script>
 

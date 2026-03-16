@@ -50,10 +50,13 @@ const handlePayment = (id: number) => {
   showPaymentModal.value = true;
 };
 
-const handlePaymentSubmit = async (loanId: number, amount: number) => {
+const handlePaymentSubmit = async (loanId: number, amount: number, paymentDate: string) => {
   paymentLoading.value = true;
   try {
-    await MakePayment(loanId, amount);
+    // 将日期转换为 ISO 8601 格式
+    const dateObj = new Date(paymentDate);
+    const isoDate = dateObj.toISOString();
+    await MakePayment(loanId, amount, isoDate);
     showPaymentModal.value = false;
     await loadLoans();
   } catch (err) {

@@ -22,7 +22,7 @@ func NewPaymentService(db *gorm.DB) *PaymentService {
 }
 
 // MakePayment 记录还款
-func (s *PaymentService) MakePayment(loanID uint, amount float64) error {
+func (s *PaymentService) MakePayment(loanID uint, amount float64, paymentDate time.Time) error {
 	// 开启事务
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		// 查询贷款
@@ -35,7 +35,7 @@ func (s *PaymentService) MakePayment(loanID uint, amount float64) error {
 		payment := models.Payment{
 			LoanID:      loanID,
 			Amount:      amount,
-			PaymentDate: time.Now(),
+			PaymentDate: paymentDate,
 		}
 		if err := tx.Create(&payment).Error; err != nil {
 			return err
@@ -46,6 +46,12 @@ func (s *PaymentService) MakePayment(loanID uint, amount float64) error {
 		if loan.Amount <= 0 {
 			loan.Amount = 0
 			loan.Status = models.StatusCompleted
+		}
+
+		// 根据还款时间重新计算贷款数据
+		// 如果还款时间晚于开始日期，需要调整开始日期为还款时间
+		if paymentDate.After(loan.StartDate) && loan.Amount > 0 {
+			loan.StartDate = paymentDate
 		}
 
 		// 重新计算月供

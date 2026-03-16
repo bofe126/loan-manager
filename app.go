@@ -7,6 +7,7 @@ import (
 	"loan-manager-wails/backend/services"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // App struct
@@ -76,6 +77,11 @@ func (a *App) DeleteLoan(id uint) error {
 }
 
 // MakePayment 记录还款
-func (a *App) MakePayment(loanID uint, amount float64) error {
-	return a.paymentService.MakePayment(loanID, amount)
+func (a *App) MakePayment(loanID uint, amount float64, paymentDateStr string) error {
+	// 解析还款时间
+	paymentDate, err := time.Parse(time.RFC3339, paymentDateStr)
+	if err != nil {
+		return err
+	}
+	return a.paymentService.MakePayment(loanID, amount, paymentDate)
 }
