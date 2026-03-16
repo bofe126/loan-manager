@@ -93,6 +93,8 @@ wails build
 
 ## 🎨 界面预览
 
+![主界面](screenshots/main_page.png)
+
 应用采用金融科技暗黑主题设计：
 - 深蓝色背景 (#0A0E27)
 - 蓝色主色调 (#0080FF)
