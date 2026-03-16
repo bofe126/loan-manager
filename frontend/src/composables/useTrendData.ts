@@ -12,6 +12,8 @@ export function useTrendData() {
     const remainingAmounts: number[] = [];
 
     const now = new Date();
+    // 获取当前月份的第一天，用于比较
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     for (let i = 0; i < months; i++) {
       const futureDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
@@ -25,15 +27,18 @@ export function useTrendData() {
 
         const startDate = new Date(loan.start_date);
         const endDate = new Date(loan.end_date);
+        const endMonthStart = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
 
         // 检查贷款是否在此月份内有效
-        if (futureDate >= now && futureDate <= endDate) {
+        if (futureDate >= currentMonthStart && futureDate <= endMonthStart) {
           // 使用当前的月供（已经考虑了提前还款）
           totalMonthlyPayment += loan.monthly_payment;
 
           // 计算该月的剩余金额（从当前余额开始计算）
-          const monthsFromNow = calculateLoanMonths(now, futureDate);
-          const remainingMonthsTotal = calculateLoanMonths(now, endDate);
+          // 使用月份的第一天来计算，避免日期差异导致的计算错误
+          const nowMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const monthsFromNow = calculateLoanMonths(nowMonthStart, futureDate);
+          const remainingMonthsTotal = calculateLoanMonths(nowMonthStart, endDate);
           const monthlyRate = calculateMonthlyRate(loan.interest_rate);
 
           // 使用当前剩余金额作为起点
