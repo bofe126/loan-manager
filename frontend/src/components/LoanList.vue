@@ -66,10 +66,27 @@
         </tbody>
       </table>
     </div>
+
+    <!-- 删除确认弹窗 -->
+    <div v-if="showDeleteConfirm" class="modal-overlay" @click="showDeleteConfirm = false">
+      <div class="modal-content confirm-modal" @click.stop>
+        <div class="modal-header">
+          <h5 class="modal-title">确认删除</h5>
+        </div>
+        <div class="modal-body">
+          <p>确定要删除这条贷款记录吗？此操作无法撤销。</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="showDeleteConfirm = false">取消</button>
+          <button class="btn btn-danger" @click="confirmDelete">删除</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { models } from '../../wailsjs/go/models';
 
 interface Props {
@@ -86,6 +103,9 @@ interface Emits {
 
 defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+const showDeleteConfirm = ref(false);
+const deleteId = ref<number | null>(null);
 
 const formatDate = (dateStr: any): string => {
   if (!dateStr) return '';
@@ -121,8 +141,15 @@ const getPaymentMethodText = (method: string): string => {
 };
 
 const handleDelete = (id: number) => {
-  if (confirm('确定要删除这条贷款记录吗？')) {
-    emit('delete', id);
+  deleteId.value = id;
+  showDeleteConfirm.value = true;
+};
+
+const confirmDelete = () => {
+  if (deleteId.value !== null) {
+    emit('delete', deleteId.value);
+    showDeleteConfirm.value = false;
+    deleteId.value = null;
   }
 };
 </script>
@@ -354,5 +381,88 @@ const handleDelete = (id: number) => {
   .loan-table {
     min-width: 900px;
   }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--glass-border);
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border: 1px solid transparent;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border-color: var(--glass-border);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.6);
 }
 </style>

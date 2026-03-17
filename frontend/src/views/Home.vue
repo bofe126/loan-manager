@@ -119,15 +119,19 @@ const handleLoanCountClick = () => {
 
 <style scoped>
 .home {
-  min-height: calc(100vh - 56px);
-  padding: 1.5rem;
+  height: 100%;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 仪表板布局 */
 .dashboard-layout {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 /* 左侧统计卡片 - 黄金分割比例 */
@@ -137,6 +141,8 @@ const handleLoanCountClick = () => {
   gap: 0.75rem;
   flex: 0 0 38.2%;
   max-width: 38.2%;
+  min-height: 0;
+  align-self: stretch;
 }
 
 .stat-card {
@@ -145,16 +151,16 @@ const handleLoanCountClick = () => {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  padding: 1rem;
+  padding: 0.75rem;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
   flex: 1;
-  min-height: 80px;
+  min-height: 0;
   cursor: pointer;
 }
 
@@ -245,9 +251,11 @@ const handleLoanCountClick = () => {
   flex: 0 0 61.8%;
   max-width: 61.8%;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  padding-right: 1.5rem;
+  align-self: stretch;
+  padding-right: 1rem;
 }
 
 /* 响应式 */

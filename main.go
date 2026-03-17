@@ -18,7 +18,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "Loan Manager",
+		Title:  "贷款助手",
 		Width:  800,
 		Height: 520,
 		AssetServer: &assetserver.Options{
@@ -29,8 +29,11 @@ func main() {
 		Bind: []any{
 			app,
 		},
+		Frameless: true,
 		Windows: &windows.Options{
-			Theme: windows.Dark,
+			Theme:            windows.Dark,
+			WebviewIsTransparent: false,
+			WindowIsTranslucent:  false,
 		},
 	})
 

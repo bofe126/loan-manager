@@ -97,7 +97,7 @@ const createFinancialChartConfig = (
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       interaction: {
         intersect: false,
         mode: 'index' as const,
@@ -212,6 +212,9 @@ watch(chartType, () => {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-card {
@@ -223,6 +226,10 @@ watch(chartType, () => {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .chart-card::after {
@@ -246,6 +253,14 @@ watch(chartType, () => {
     opacity: 0.8;
     transform: scale(1.1) rotate(180deg);
   }
+}
+
+.card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  min-height: 0;
 }
 
 .chart-header {
@@ -342,7 +357,9 @@ watch(chartType, () => {
 }
 
 canvas {
-  max-height: 350px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   position: relative;
   z-index: 1;
 }
