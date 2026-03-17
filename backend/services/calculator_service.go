@@ -282,7 +282,6 @@ func (s *CalculatorService) GeneratePaymentSchedule(loan models.Loan, currentDat
 	monthlyRate := s.CalculateMonthlyRate(loan.InterestRate)
 	dailyRate := s.CalculateDailyRate(loan.InterestRate)
 	currentPrincipal := loan.TotalAmount
-	remainingMonths := totalMonths
 	lastPaymentDate := loan.StartDate
 	periodNumber := 0
 
@@ -299,6 +298,9 @@ func (s *CalculatorService) GeneratePaymentSchedule(loan models.Loan, currentDat
 		} else {
 			monthlyPaymentDate = firstPaymentDate.AddDate(0, month-1, 0)
 		}
+
+		// 计算从当前月到贷款结束的剩余月数
+		remainingMonths := totalMonths - month + 1
 
 		// 计算本月正常还款
 		var principalPayment float64
@@ -428,8 +430,6 @@ func (s *CalculatorService) GeneratePaymentSchedule(loan models.Loan, currentDat
 		if currentPrincipal <= 0 {
 			break
 		}
-
-		remainingMonths--
 	}
 
 	return schedule
