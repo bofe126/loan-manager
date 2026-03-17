@@ -189,7 +189,8 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 			   (payment.PaymentDate.Before(nextMonthPaymentDate) || payment.PaymentDate.Equal(nextMonthPaymentDate)) {
 
 				days := int(payment.PaymentDate.Sub(lastPaymentDate).Hours() / 24)
-				interest := currentPrincipal * dailyRate * float64(days)
+				// 提前还款利息按还款金额计算，而不是剩余本金
+				interest := payment.Amount * dailyRate * float64(days)
 
 				principalPayment := payment.Amount - interest
 				if principalPayment > 0 {
@@ -377,8 +378,9 @@ func (s *CalculatorService) GeneratePaymentSchedule(loan models.Loan, currentDat
 			   (payment.PaymentDate.Before(nextMonthPaymentDate) || payment.PaymentDate.Equal(nextMonthPaymentDate)) {
 
 				// 计算额外还款的利息（按天）
+				// 提前还款利息按还款金额计算，而不是剩余本金
 				days := int(payment.PaymentDate.Sub(lastPaymentDate).Hours() / 24)
-				extraInterest := currentPrincipal * dailyRate * float64(days)
+				extraInterest := payment.Amount * dailyRate * float64(days)
 				extraInterest = math.Round(extraInterest*100) / 100
 
 				// 本金还款
