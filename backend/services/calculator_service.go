@@ -152,19 +152,22 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 			if monthlyRate == 0 {
 				principalPayment = currentPrincipal / float64(remainingMonths)
 			} else {
-				currentMonthlyPayment := s.calculateMonthlyPaymentForAmount(
+				currentMonthlyPayment := s.CalculateMonthlyPaymentForAmount(
 					currentPrincipal,
 					monthlyRate,
 					remainingMonths,
 				)
-				// 如果是第一期且天数不是标准30天，按实际天数计算利息
+				// 如果是第一期且天数不是标准30天，按实际天数计算利息用于显示
+				// 但计算本金时仍使用月利率，以保持与还款计划一致
 				var monthlyInterest float64
 				if month == 1 && days != 30 {
 					monthlyInterest = currentPrincipal * dailyRate * float64(days)
+					// 计算本金时使用月利率
+					principalPayment = currentMonthlyPayment - (currentPrincipal * monthlyRate)
 				} else {
 					monthlyInterest = currentPrincipal * monthlyRate
+					principalPayment = currentMonthlyPayment - monthlyInterest
 				}
-				principalPayment = currentMonthlyPayment - monthlyInterest
 			}
 
 		case models.EqualPrincipal:
@@ -227,7 +230,8 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 }
 
 // calculateMonthlyPaymentForAmount 计算指定本金和期限的月供（等额本息）
-func (s *CalculatorService) calculateMonthlyPaymentForAmount(principal float64, monthlyRate float64, months int) float64 {
+// CalculateMonthlyPaymentForAmount 根据本金、月利率和期数计算月供
+func (s *CalculatorService) CalculateMonthlyPaymentForAmount(principal float64, monthlyRate float64, months int) float64 {
 	if monthlyRate == 0 {
 		return principal / float64(months)
 	}
@@ -314,14 +318,14 @@ func (s *CalculatorService) GeneratePaymentSchedule(loan models.Loan, currentDat
 			} else {
 				if month == 1 && days != 30 {
 					interestPayment = currentPrincipal * dailyRate * float64(days)
-					currentMonthlyPayment := s.calculateMonthlyPaymentForAmount(
+					currentMonthlyPayment := s.CalculateMonthlyPaymentForAmount(
 						currentPrincipal,
 						monthlyRate,
 						remainingMonths,
 					)
 					principalPayment = currentMonthlyPayment - (currentPrincipal * monthlyRate)
 				} else {
-					currentMonthlyPayment := s.calculateMonthlyPaymentForAmount(
+					currentMonthlyPayment := s.CalculateMonthlyPaymentForAmount(
 						currentPrincipal,
 						monthlyRate,
 						remainingMonths,
