@@ -109,7 +109,8 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 		dailyRate := s.CalculateDailyRate(loan.InterestRate)
 		for _, payment := range loan.Payments {
 			days := int(payment.PaymentDate.Sub(loan.StartDate).Hours() / 24)
-			interest := remaining * dailyRate * float64(days)
+			// 提前还款利息按还款金额计算
+			interest := payment.Amount * dailyRate * float64(days)
 
 			principalPayment := payment.Amount - interest
 			if principalPayment > 0 {
@@ -125,6 +126,7 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 	monthlyRate := s.CalculateMonthlyRate(loan.InterestRate)
 	dailyRate := s.CalculateDailyRate(loan.InterestRate)
 	currentPrincipal := loan.TotalAmount
+	remainingMonths := totalMonths
 	lastPaymentDate := loan.StartDate
 
 	// 逐月模拟还款过程
@@ -140,9 +142,6 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 		} else {
 			monthlyPaymentDate = firstPaymentDate.AddDate(0, month-1, 0)
 		}
-
-		// 计算从当前月到贷款结束的剩余月数
-		remainingMonths := totalMonths - month + 1
 
 		// 计算本月正常还款的本金部分
 		var principalPayment float64
@@ -220,6 +219,8 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 		if currentPrincipal <= 0 {
 			break
 		}
+
+		remainingMonths--
 	}
 
 	return math.Round(currentPrincipal*100) / 100
@@ -282,6 +283,7 @@ func (s *CalculatorService) GeneratePaymentSchedule(loan models.Loan, currentDat
 	monthlyRate := s.CalculateMonthlyRate(loan.InterestRate)
 	dailyRate := s.CalculateDailyRate(loan.InterestRate)
 	currentPrincipal := loan.TotalAmount
+	remainingMonths := totalMonths
 	lastPaymentDate := loan.StartDate
 	periodNumber := 0
 
@@ -298,9 +300,6 @@ func (s *CalculatorService) GeneratePaymentSchedule(loan models.Loan, currentDat
 		} else {
 			monthlyPaymentDate = firstPaymentDate.AddDate(0, month-1, 0)
 		}
-
-		// 计算从当前月到贷款结束的剩余月数
-		remainingMonths := totalMonths - month + 1
 
 		// 计算本月正常还款
 		var principalPayment float64
@@ -430,6 +429,8 @@ func (s *CalculatorService) GeneratePaymentSchedule(loan models.Loan, currentDat
 		if currentPrincipal <= 0 {
 			break
 		}
+
+		remainingMonths--
 	}
 
 	return schedule
