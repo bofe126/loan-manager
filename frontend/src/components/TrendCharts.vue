@@ -139,56 +139,10 @@ const createFinancialChartConfig = (
       },
       scales: {
         x: {
-          grid: {
-            display: true,
-            color: 'rgba(255, 255, 255, 0.03)',
-            drawBorder: false,
-            lineWidth: 1,
-          },
-          ticks: {
-            color: '#6B7280',
-            font: {
-              size: 11,
-              family: "'Inter', sans-serif",
-              weight: 'normal' as const,
-            },
-            maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 12,
-            padding: 8,
-          },
-          border: {
-            display: false,
-          },
+          display: false,
         },
         y: {
-          beginAtZero: true,
-          grid: {
-            display: true,
-            color: 'rgba(255, 255, 255, 0.03)',
-            drawBorder: false,
-            lineWidth: 1,
-          },
-          ticks: {
-            color: '#6B7280',
-            font: {
-              size: 11,
-              family: "'JetBrains Mono', monospace",
-              weight: 'normal' as const,
-            },
-            callback: (value: any) => {
-              if (value >= 1000000) {
-                return '¥' + (value / 1000000).toFixed(1) + 'M';
-              } else if (value >= 1000) {
-                return '¥' + (value / 1000).toFixed(0) + 'K';
-              }
-              return '¥' + value.toLocaleString('zh-CN');
-            },
-            padding: 12,
-          },
-          border: {
-            display: false,
-          },
+          display: false,
         },
       },
     },
@@ -302,8 +256,8 @@ watch(chartType, () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0;
+  border-bottom: none;
   position: relative;
   z-index: 2;
 }
@@ -336,7 +290,7 @@ watch(chartType, () => {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   cursor: pointer;
-  padding: 0.5rem 1.25rem;
+  padding: 0.375rem 1rem;
   border-radius: calc(var(--radius-md) - 0.25rem);
   transition: all var(--transition-base);
   font-family: var(--font-body);
@@ -350,7 +304,7 @@ watch(chartType, () => {
   background: transparent;
   color: var(--text-secondary);
   font-weight: 500;
-  padding: 0.5rem 1.25rem;
+  padding: 0.375rem 1rem;
 }
 
 .chart-toggle.primary-btn:hover {
@@ -368,7 +322,7 @@ watch(chartType, () => {
   background: transparent;
   color: var(--text-secondary);
   font-weight: 500;
-  padding: 0.5rem 1.25rem;
+  padding: 0.375rem 1rem;
 }
 
 .chart-toggle.secondary-btn:hover {

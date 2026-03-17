@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="app-container">
     <nav class="navbar navbar-dark">
       <div class="nav-container">
         <router-link class="navbar-brand" to="/">LOAN</router-link>
@@ -11,6 +11,9 @@
       </div>
     </nav>
     <router-view />
+    <footer class="app-footer">
+      <span class="footer-text">powered by jeffrey huang</span>
+    </footer>
   </div>
 </template>
 
@@ -19,6 +22,30 @@
 
 <style>
 /* 全局样式已在 style.css 中定义 */
+.app-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  padding: 0.5rem 1rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.footer-text {
+  font-size: 0.625rem;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+}
+
 .navbar {
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);

@@ -247,6 +247,7 @@ const handleLoanCountClick = () => {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  padding-right: 1.5rem;
 }
 
 /* 响应式 */
