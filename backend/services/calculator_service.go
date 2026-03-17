@@ -37,6 +37,13 @@ func (s *CalculatorService) CalculateMonthlyRate(annualRate float64) float64 {
 	return annualRate / models.Percentage / models.MonthsPerYear
 }
 
+// CalculateDailyRate 计算日利率
+// 根据《中国人民银行关于人民币存贷款计结息问题的通知》（银发〔2005〕129号）
+// 日利率 = 年利率(%) ÷ 360
+func (s *CalculatorService) CalculateDailyRate(annualRate float64) float64 {
+	return annualRate / models.Percentage / 360
+}
+
 // CalculateMonthlyPayment 计算月供
 func (s *CalculatorService) CalculateMonthlyPayment(amount, interestRate float64, startDate, endDate time.Time, paymentMethod models.PaymentMethod) float64 {
 	months := s.CalculateLoanMonths(startDate, endDate)
@@ -116,7 +123,7 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 	}
 
 	monthlyRate := s.CalculateMonthlyRate(loan.InterestRate)
-	dailyRate := monthlyRate / 30
+	dailyRate := s.CalculateDailyRate(loan.InterestRate)
 	currentPrincipal := loan.TotalAmount
 	remainingMonths := totalMonths
 	lastPaymentDate := loan.StartDate
@@ -273,7 +280,7 @@ func (s *CalculatorService) GeneratePaymentSchedule(loan models.Loan, currentDat
 	}
 
 	monthlyRate := s.CalculateMonthlyRate(loan.InterestRate)
-	dailyRate := monthlyRate / 30
+	dailyRate := s.CalculateDailyRate(loan.InterestRate)
 	currentPrincipal := loan.TotalAmount
 	remainingMonths := totalMonths
 	lastPaymentDate := loan.StartDate
