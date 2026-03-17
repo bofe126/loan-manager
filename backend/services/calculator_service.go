@@ -106,9 +106,9 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 	if monthsPassed <= 0 {
 		// 还没开始还款，但可能有提前还款
 		remaining := loan.TotalAmount
+		dailyRate := s.CalculateDailyRate(loan.InterestRate)
 		for _, payment := range loan.Payments {
 			days := int(payment.PaymentDate.Sub(loan.StartDate).Hours() / 24)
-			dailyRate := s.CalculateMonthlyRate(loan.InterestRate) / 30
 			interest := remaining * dailyRate * float64(days)
 
 			principalPayment := payment.Amount - interest
@@ -125,7 +125,6 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 	monthlyRate := s.CalculateMonthlyRate(loan.InterestRate)
 	dailyRate := s.CalculateDailyRate(loan.InterestRate)
 	currentPrincipal := loan.TotalAmount
-	remainingMonths := totalMonths
 	lastPaymentDate := loan.StartDate
 
 	// 逐月模拟还款过程
@@ -141,6 +140,9 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 		} else {
 			monthlyPaymentDate = firstPaymentDate.AddDate(0, month-1, 0)
 		}
+
+		// 计算从当前月到贷款结束的剩余月数
+		remainingMonths := totalMonths - month + 1
 
 		// 计算本月正常还款的本金部分
 		var principalPayment float64
@@ -218,8 +220,6 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 		if currentPrincipal <= 0 {
 			break
 		}
-
-		remainingMonths--
 	}
 
 	return math.Round(currentPrincipal*100) / 100
