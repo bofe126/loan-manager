@@ -34,22 +34,33 @@ export function useTrendData() {
           // 使用当前的月供（已经考虑了提前还款）
           totalMonthlyPayment += loan.monthly_payment;
 
-          // 计算该月的剩余金额（从当前余额开始计算）
-          // 使用月份的第一天来计算，避免日期差异导致的计算错误
-          const nowMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-          const monthsFromNow = calculateLoanMonths(nowMonthStart, futureDate);
-          const remainingMonthsTotal = calculateLoanMonths(nowMonthStart, endDate);
-          const monthlyRate = calculateMonthlyRate(loan.interest_rate);
-
-          // 使用当前剩余金额作为起点
+          // 计算该月的剩余金额
+          // 对于当前月份，需要反推到月初的余额
           const currentRemaining = loan.remaining_amount || loan.total_amount;
           let remaining = 0;
 
-          if (monthsFromNow === 0) {
-            // 当前月份，使用当前余额
-            remaining = currentRemaining;
+          if (i === 0) {
+            // 当前月份：从当前余额反推到月初
+            // 如果本月已经有还款，需要加回本金部分
+            const currentDay = now.getDate();
+            const paymentDay = loan.payment_date || 1;
+
+            if (currentDay > paymentDay) {
+              // 本月还款日已过，加回本月还款的本金部分
+              const monthlyRate = calculateMonthlyRate(loan.interest_rate);
+              const interest = currentRemaining * monthlyRate / (1 - monthlyRate);
+              const principal = loan.monthly_payment - interest;
+              remaining = currentRemaining + principal;
+            } else {
+              // 本月还款日未到，当前余额就是月初余额
+              remaining = currentRemaining;
+            }
           } else {
-            // 未来月份，基于当前余额计算
+            // 未来月份：从当前余额投影
+            const monthsFromNow = i;
+            const remainingMonthsTotal = calculateLoanMonths(now, endDate);
+            const monthlyRate = calculateMonthlyRate(loan.interest_rate);
+
             switch (loan.payment_method as PaymentMethod) {
               case '等额本息': {
                 if (monthlyRate === 0) {

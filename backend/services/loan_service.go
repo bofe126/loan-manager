@@ -29,9 +29,20 @@ func (s *LoanService) GetAllLoans() ([]models.Loan, error) {
 		return nil, err
 	}
 
-	// 实时计算每笔贷款的当前余额和月供
+	// 计算每笔贷款的当前余额和月供
 	now := time.Now()
 	for i := range loans {
+		// 找到最后一次实际还款日期
+		var lastActualPaymentDate time.Time
+		if len(loans[i].Payments) > 0 {
+			for _, payment := range loans[i].Payments {
+				if payment.PaymentDate.After(lastActualPaymentDate) {
+					lastActualPaymentDate = payment.PaymentDate
+				}
+			}
+		}
+
+		// 余额：模拟到当前日期
 		loans[i].RemainingAmount = s.calculatorService.CalculateRemainingAmount(loans[i], now)
 
 		// 如果余额为0，更新状态为已完成
@@ -43,25 +54,15 @@ func (s *LoanService) GetAllLoans() ([]models.Loan, error) {
 				"monthly_payment": 0,
 			})
 		} else if loans[i].RemainingAmount > 0 {
-			// 找到最后一次实际还款日期
-			var lastActualPaymentDate time.Time
-			if len(loans[i].Payments) > 0 {
-				for _, payment := range loans[i].Payments {
-					if payment.PaymentDate.After(lastActualPaymentDate) {
-						lastActualPaymentDate = payment.PaymentDate
-					}
-				}
-			}
-
-			// 如果有实际还款记录，基于最后还款日计算；否则基于开始日期
-			var baseDate time.Time
+			// 月供：基于最后实际还款后的余额计算
 			var baseBalance float64
+			var baseDate time.Time
 			if !lastActualPaymentDate.IsZero() {
+				baseBalance = s.calculatorService.CalculateRemainingAmount(loans[i], lastActualPaymentDate.AddDate(0, 0, 1))
 				baseDate = lastActualPaymentDate
-				baseBalance = s.calculatorService.CalculateRemainingAmount(loans[i], lastActualPaymentDate)
 			} else {
-				baseDate = loans[i].StartDate
 				baseBalance = loans[i].TotalAmount
+				baseDate = loans[i].StartDate
 			}
 
 			// 计算下一个还款日
@@ -79,7 +80,6 @@ func (s *LoanService) GetAllLoans() ([]models.Loan, error) {
 				)
 			}
 
-			// 找到baseDate之后的下一个还款日
 			for nextPaymentDate.Before(baseDate) || nextPaymentDate.Equal(baseDate) {
 				nextPaymentDate = nextPaymentDate.AddDate(0, 1, 0)
 			}
@@ -96,7 +96,6 @@ func (s *LoanService) GetAllLoans() ([]models.Loan, error) {
 				lastPaymentDate = lastPaymentDate.AddDate(0, -1, 0)
 			}
 
-			// 计算剩余期数
 			remainingMonths := s.calculatorService.CalculateLoanMonths(nextPaymentDate, lastPaymentDate) + 1
 			monthlyRate := s.calculatorService.CalculateMonthlyRate(loans[i].InterestRate)
 			loans[i].MonthlyPayment = s.calculatorService.CalculateMonthlyPaymentForAmount(
@@ -118,8 +117,20 @@ func (s *LoanService) GetLoanByID(id uint) (*models.Loan, error) {
 		return nil, err
 	}
 
-	// 实时计算当前余额和月供
+	// 计算当前余额和月供
 	now := time.Now()
+
+	// 找到最后一次实际还款日期
+	var lastActualPaymentDate time.Time
+	if len(loan.Payments) > 0 {
+		for _, payment := range loan.Payments {
+			if payment.PaymentDate.After(lastActualPaymentDate) {
+				lastActualPaymentDate = payment.PaymentDate
+			}
+		}
+	}
+
+	// 余额：模拟到当前日期
 	loan.RemainingAmount = s.calculatorService.CalculateRemainingAmount(loan, now)
 
 	// 如果余额为0，更新状态为已完成
@@ -131,25 +142,15 @@ func (s *LoanService) GetLoanByID(id uint) (*models.Loan, error) {
 			"monthly_payment": 0,
 		})
 	} else if loan.RemainingAmount > 0 {
-		// 找到最后一次实际还款日期
-		var lastActualPaymentDate time.Time
-		if len(loan.Payments) > 0 {
-			for _, payment := range loan.Payments {
-				if payment.PaymentDate.After(lastActualPaymentDate) {
-					lastActualPaymentDate = payment.PaymentDate
-				}
-			}
-		}
-
-		// 如果有实际还款记录，基于最后还款日计算；否则基于开始日期
-		var baseDate time.Time
+		// 月供：基于最后实际还款后的余额计算
 		var baseBalance float64
+		var baseDate time.Time
 		if !lastActualPaymentDate.IsZero() {
+			baseBalance = s.calculatorService.CalculateRemainingAmount(loan, lastActualPaymentDate.AddDate(0, 0, 1))
 			baseDate = lastActualPaymentDate
-			baseBalance = s.calculatorService.CalculateRemainingAmount(loan, lastActualPaymentDate)
 		} else {
-			baseDate = loan.StartDate
 			baseBalance = loan.TotalAmount
+			baseDate = loan.StartDate
 		}
 
 		// 计算下一个还款日
@@ -167,7 +168,6 @@ func (s *LoanService) GetLoanByID(id uint) (*models.Loan, error) {
 			)
 		}
 
-		// 找到baseDate之后的下一个还款日
 		for nextPaymentDate.Before(baseDate) || nextPaymentDate.Equal(baseDate) {
 			nextPaymentDate = nextPaymentDate.AddDate(0, 1, 0)
 		}
@@ -184,7 +184,6 @@ func (s *LoanService) GetLoanByID(id uint) (*models.Loan, error) {
 			lastPaymentDate = lastPaymentDate.AddDate(0, -1, 0)
 		}
 
-		// 计算剩余期数
 		remainingMonths := s.calculatorService.CalculateLoanMonths(nextPaymentDate, lastPaymentDate) + 1
 		monthlyRate := s.calculatorService.CalculateMonthlyRate(loan.InterestRate)
 		loan.MonthlyPayment = s.calculatorService.CalculateMonthlyPaymentForAmount(
