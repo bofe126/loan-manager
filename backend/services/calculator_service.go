@@ -129,6 +129,16 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 	remainingMonths := totalMonths
 	lastPaymentDate := loan.StartDate
 
+	// 初始月供（在提前还款后会重新计算）
+	var fixedMonthlyPayment float64
+	if loan.PaymentMethod == models.EqualInstallment {
+		fixedMonthlyPayment = s.CalculateMonthlyPaymentForAmount(
+			currentPrincipal,
+			monthlyRate,
+			remainingMonths,
+		)
+	}
+
 	// 逐月模拟还款过程
 	for month := 1; month <= monthsPassed; month++ {
 		if currentPrincipal <= 0 {
@@ -152,21 +162,15 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 			if monthlyRate == 0 {
 				principalPayment = currentPrincipal / float64(remainingMonths)
 			} else {
-				currentMonthlyPayment := s.CalculateMonthlyPaymentForAmount(
-					currentPrincipal,
-					monthlyRate,
-					remainingMonths,
-				)
-				// 如果是第一期且天数不是标准30天，按实际天数计算利息用于显示
-				// 但计算本金时仍使用月利率，以保持与还款计划一致
+				// 使用固定月供
 				var monthlyInterest float64
 				if month == 1 && days != 30 {
 					monthlyInterest = currentPrincipal * dailyRate * float64(days)
 					// 计算本金时使用月利率
-					principalPayment = currentMonthlyPayment - (currentPrincipal * monthlyRate)
+					principalPayment = fixedMonthlyPayment - (currentPrincipal * monthlyRate)
 				} else {
 					monthlyInterest = currentPrincipal * monthlyRate
-					principalPayment = currentMonthlyPayment - monthlyInterest
+					principalPayment = fixedMonthlyPayment - monthlyInterest
 				}
 			}
 
@@ -195,13 +199,14 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 			nextMonthPaymentDate = firstPaymentDate.AddDate(0, month, 0)
 		}
 
+		hasExtraPayment := false
 		for _, payment := range loan.Payments {
 			if payment.PaymentDate.After(monthlyPaymentDate) &&
 			   (payment.PaymentDate.Before(nextMonthPaymentDate) || payment.PaymentDate.Equal(nextMonthPaymentDate)) {
 
 				days := int(payment.PaymentDate.Sub(lastPaymentDate).Hours() / 24)
-				// 提前还款利息按还款金额计算，而不是剩余本金
-				interest := payment.Amount * dailyRate * float64(days)
+				// 提前还款利息 = 剩余本金 × 日利率 × 天数
+				interest := currentPrincipal * dailyRate * float64(days)
 
 				principalPayment := payment.Amount - interest
 				if principalPayment > 0 {
@@ -209,6 +214,7 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 					if currentPrincipal < 0 {
 						currentPrincipal = 0
 					}
+					hasExtraPayment = true
 				}
 
 				lastPaymentDate = payment.PaymentDate
@@ -217,6 +223,17 @@ func (s *CalculatorService) CalculateRemainingAmount(loan models.Loan, currentDa
 					break
 				}
 			}
+		}
+
+		// 提前还款后，重新计算固定月供
+		if hasExtraPayment && currentPrincipal > 0 && loan.PaymentMethod == models.EqualInstallment {
+			// 计算从下一期到贷款结束的实际剩余月数
+			actualRemainingMonths := totalMonths - month
+			fixedMonthlyPayment = s.CalculateMonthlyPaymentForAmount(
+				currentPrincipal,
+				monthlyRate,
+				actualRemainingMonths,
+			)
 		}
 
 		if currentPrincipal <= 0 {

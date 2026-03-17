@@ -20,14 +20,18 @@ const router = useRouter();
 const { loading, createLoan } = useLoans();
 
 const handleSubmit = async (data: Partial<models.Loan>) => {
+  console.log('AddLoan handleSubmit called with data:', data);
   const success = await createLoan(data);
+  console.log('createLoan result:', success);
   if (success) {
     router.push('/');
   }
 };
 
 const handleSubmitAndNew = async (data: Partial<models.Loan>) => {
+  console.log('AddLoan handleSubmitAndNew called with data:', data);
   const success = await createLoan(data);
+  console.log('createLoan result:', success);
   if (success) {
     // 刷新页面以清空表单
     window.location.reload();

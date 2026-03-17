@@ -179,6 +179,7 @@ const formData = ref({
   payment_date: 1,
   payment_method: '等额本息',
   status: 'active',
+  monthly_payment: 0,
 });
 
 const previewMonthlyPayment = ref(0);
@@ -204,13 +205,28 @@ onMounted(() => {
       payment_date: props.initialData.payment_date,
       payment_method: props.initialData.payment_method,
       status: props.initialData.status,
+      monthly_payment: props.initialData.monthly_payment || 0,
     };
-    updatePreview();
+    // 编辑模式下直接使用后端返回的月供
+    previewMonthlyPayment.value = props.initialData.monthly_payment || 0;
+    console.log('=== 前端初始化 ===');
+    console.log('后端返回的月供:', props.initialData.monthly_payment);
+    console.log('设置 previewMonthlyPayment 为:', previewMonthlyPayment.value);
+    console.log('isEditMode:', isEditMode.value);
   }
 });
 
 // 更新预览
 const updatePreview = () => {
+  console.log('updatePreview 被调用, isEditMode:', isEditMode.value);
+
+  // 编辑模式下不重新计算，使用后端返回的值
+  if (isEditMode.value) {
+    console.log('编辑模式，不重新计算，保持月供:', previewMonthlyPayment.value);
+    return;
+  }
+
+  // 新建模式下才计算预览
   if (
     formData.value.total_amount > 0 &&
     formData.value.interest_rate > 0 &&
@@ -220,61 +236,64 @@ const updatePreview = () => {
     const startDate = new Date(formData.value.start_date);
     const endDate = new Date(formData.value.end_date);
 
-    // 编辑模式下使用剩余金额，新建模式下使用总金额
-    const amount = isEditMode.value && formData.value.remaining_amount > 0
-      ? formData.value.remaining_amount
-      : formData.value.total_amount;
-
-    // 编辑模式下使用当前日期作为起始日期
-    const calcStartDate = isEditMode.value ? new Date() : startDate;
-
-    previewMonthlyPayment.value = calculateMonthlyPayment(
-      amount,
+    const calculated = calculateMonthlyPayment(
+      formData.value.total_amount,
       formData.value.interest_rate,
-      calcStartDate,
+      startDate,
       endDate,
       formData.value.payment_method as any
     );
+
+    console.log('新建模式，计算月供:', calculated);
+    previewMonthlyPayment.value = calculated;
   }
 };
 
 // 提交表单
 const handleSubmit = () => {
+  console.log('handleSubmit called');
   const submitData: any = {
     ...formData.value,
     start_date: new Date(formData.value.start_date).toISOString(),
     end_date: new Date(formData.value.end_date).toISOString(),
   };
 
-  // 如果有第一期还款日期，转换为ISO格式
-  if (formData.value.first_payment_date) {
+  // 如果有第一期还款日期，转换为ISO格式；否则删除该字段
+  if (formData.value.first_payment_date && formData.value.first_payment_date.trim() !== '') {
     submitData.first_payment_date = new Date(formData.value.first_payment_date).toISOString();
+  } else {
+    delete submitData.first_payment_date;
   }
 
   if (props.initialData) {
     submitData.id = props.initialData.id;
   }
 
+  console.log('Emitting submit event with data:', submitData);
   emit('submit', submitData);
 };
 
 // 提交并新建
 const handleSubmitAndNew = () => {
+  console.log('handleSubmitAndNew called');
   const submitData: any = {
     ...formData.value,
     start_date: new Date(formData.value.start_date).toISOString(),
     end_date: new Date(formData.value.end_date).toISOString(),
   };
 
-  // 如果有第一期还款日期，转换为ISO格式
-  if (formData.value.first_payment_date) {
+  // 如果有第一期还款日期，转换为ISO格式；否则删除该字段
+  if (formData.value.first_payment_date && formData.value.first_payment_date.trim() !== '') {
     submitData.first_payment_date = new Date(formData.value.first_payment_date).toISOString();
+  } else {
+    delete submitData.first_payment_date;
   }
 
   if (props.initialData) {
     submitData.id = props.initialData.id;
   }
 
+  console.log('Emitting submitAndNew event with data:', submitData);
   emit('submitAndNew', submitData);
 };
 
