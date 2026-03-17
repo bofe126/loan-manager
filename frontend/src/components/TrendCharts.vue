@@ -127,10 +127,7 @@ const createFinancialChartConfig = (
           },
           callbacks: {
             label: (context: any) => {
-              return `¥ ${context.parsed.y.toLocaleString('zh-CN', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}`;
+              return `¥ ${Math.round(context.parsed.y).toLocaleString('zh-CN')}`;
             },
           },
           cornerRadius: 8,

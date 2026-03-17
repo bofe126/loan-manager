@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"loan-manager-wails/backend/models"
 	"time"
 
@@ -31,6 +32,14 @@ func (s *PaymentService) MakePayment(loanID uint, amount float64, paymentDate ti
 			return err
 		}
 
+		fmt.Printf("\n=== MakePayment Debug ===\n")
+		fmt.Printf("贷款ID: %d\n", loanID)
+		fmt.Printf("还款金额: %.2f\n", amount)
+		fmt.Printf("还款日期: %s\n", paymentDate.Format("2006-01-02"))
+		fmt.Printf("还款前余额: %.2f\n", loan.RemainingAmount)
+		fmt.Printf("还款前月供: %.2f\n", loan.MonthlyPayment)
+		fmt.Printf("已有还款记录数: %d\n", len(loan.Payments))
+
 		// 创建还款记录
 		payment := models.Payment{
 			LoanID:      loanID,
@@ -43,9 +52,11 @@ func (s *PaymentService) MakePayment(loanID uint, amount float64, paymentDate ti
 
 		// 重新加载还款记录（包含新创建的）
 		loan.Payments = append(loan.Payments, payment)
+		fmt.Printf("添加还款记录后，总记录数: %d\n", len(loan.Payments))
 
 		// 计算新的剩余金额（考虑正常还款 + 额外还款）
 		newRemaining := s.calculatorService.CalculateRemainingAmount(loan, paymentDate)
+		fmt.Printf("计算出的新余额: %.2f\n", newRemaining)
 
 		// 更新贷款信息
 		loan.RemainingAmount = newRemaining
@@ -53,8 +64,11 @@ func (s *PaymentService) MakePayment(loanID uint, amount float64, paymentDate ti
 		if newRemaining <= 0 {
 			loan.Status = models.StatusCompleted
 			loan.MonthlyPayment = 0
+			fmt.Printf("余额为0，设置状态为已完成\n")
 		} else {
 			// 还款后，需要重新计算月供
+			fmt.Printf("=== 重新计算月供 ===\n")
+
 			// 计算下一个还款日
 			var nextPaymentDate time.Time
 			if loan.FirstPaymentDate != nil {
@@ -74,6 +88,7 @@ func (s *PaymentService) MakePayment(loanID uint, amount float64, paymentDate ti
 			for nextPaymentDate.Before(paymentDate) || nextPaymentDate.Equal(paymentDate) {
 				nextPaymentDate = nextPaymentDate.AddDate(0, 1, 0)
 			}
+			fmt.Printf("下一个还款日: %s\n", nextPaymentDate.Format("2006-01-02"))
 
 			// 计算最后还款日（基于还款日，而不是结束日期）
 			lastPaymentDate := time.Date(
@@ -87,6 +102,7 @@ func (s *PaymentService) MakePayment(loanID uint, amount float64, paymentDate ti
 			if lastPaymentDate.After(loan.EndDate) {
 				lastPaymentDate = lastPaymentDate.AddDate(0, -1, 0)
 			}
+			fmt.Printf("最后还款日: %s\n", lastPaymentDate.Format("2006-01-02"))
 
 			loan.MonthlyPayment = s.calculatorService.CalculateMonthlyPayment(
 				newRemaining,
@@ -95,7 +111,11 @@ func (s *PaymentService) MakePayment(loanID uint, amount float64, paymentDate ti
 				lastPaymentDate,
 				loan.PaymentMethod,
 			)
+			fmt.Printf("计算出的新月供: %.2f\n", loan.MonthlyPayment)
 		}
+
+		fmt.Printf("保存到数据库: 余额=%.2f, 月供=%.2f\n", loan.RemainingAmount, loan.MonthlyPayment)
+		fmt.Printf("=== MakePayment 完成 ===\n\n")
 
 		// 保存贷款
 		return tx.Save(&loan).Error

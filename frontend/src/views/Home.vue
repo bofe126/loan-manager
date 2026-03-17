@@ -11,7 +11,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-label">月还款总额</div>
-            <div class="stat-value">¥{{ totalMonthlyPayment.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }}</div>
+            <div class="stat-value">¥{{ Math.round(totalMonthlyPayment).toLocaleString('zh-CN') }}</div>
           </div>
         </div>
 
@@ -24,7 +24,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-label">剩余贷款</div>
-            <div class="stat-value">¥{{ totalRemainingAmount.toLocaleString('zh-CN', { minimumFractionDigits: 0 }) }}</div>
+            <div class="stat-value">¥{{ Math.round(totalRemainingAmount).toLocaleString('zh-CN') }}</div>
           </div>
         </div>
 

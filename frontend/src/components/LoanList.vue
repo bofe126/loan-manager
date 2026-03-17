@@ -27,7 +27,7 @@
             <td class="text-left">
               <span class="bank-name">{{ loan.bank_name }}</span>
             </td>
-            <td class="text-center font-mono">¥{{ loan.remaining_amount.toLocaleString('zh-CN', { minimumFractionDigits: 0 }) }}</td>
+            <td class="text-center font-mono">¥{{ Math.round(loan.remaining_amount).toLocaleString('zh-CN') }}</td>
             <td class="text-center font-mono">{{ loan.interest_rate.toFixed(2) }}%</td>
             <td class="text-center font-mono primary-text">¥{{ Math.round(loan.monthly_payment).toLocaleString('zh-CN') }}</td>
             <td class="text-center">{{ getPaymentMethodText(loan.payment_method) }}</td>
@@ -145,21 +145,52 @@ const handleDelete = (id: number) => {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-y: auto;
+  max-height: calc(100vh - 8rem);
 }
 
 .loan-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
+  table-layout: fixed;
 }
 
+.loan-table th:nth-child(1),
+.loan-table td:nth-child(1) { width: 15%; }  /* 银行 */
+
+.loan-table th:nth-child(2),
+.loan-table td:nth-child(2) { width: 13%; }  /* 贷款余额 */
+
+.loan-table th:nth-child(3),
+.loan-table td:nth-child(3) { width: 8%; }   /* 利率 */
+
+.loan-table th:nth-child(4),
+.loan-table td:nth-child(4) { width: 13%; }  /* 月供 */
+
+.loan-table th:nth-child(5),
+.loan-table td:nth-child(5) { width: 10%; }  /* 还款方式 */
+
+.loan-table th:nth-child(6),
+.loan-table td:nth-child(6) { width: 10%; }  /* 开始日期 */
+
+.loan-table th:nth-child(7),
+.loan-table td:nth-child(7) { width: 10%; }  /* 结束日期 */
+
+.loan-table th:nth-child(8),
+.loan-table td:nth-child(8) { width: 21%; }  /* 操作 */
+
 .loan-table thead {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
 }
 
 .loan-table th {
-  padding: 0.875rem 1rem;
+  padding: 0.625rem 0.75rem;
   font-weight: 600;
   font-size: 0.8125rem;
   color: var(--text-secondary);
@@ -167,6 +198,7 @@ const handleDelete = (id: number) => {
   letter-spacing: 0.05em;
   white-space: nowrap;
   border-bottom: 1px solid var(--glass-border);
+  line-height: 1.2;
 }
 
 .loan-table th.text-left {
@@ -191,9 +223,10 @@ const handleDelete = (id: number) => {
 }
 
 .loan-table td {
-  padding: 1rem 1rem;
+  padding: 0.625rem 0.75rem;
   color: var(--text-primary);
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .loan-table td.text-left {

@@ -4,7 +4,7 @@
       <div class="card-header-section">
         <h5 class="card-title">{{ title }}</h5>
         <div v-if="isEditMode && formData.remaining_amount > 0" class="remaining-amount-badge">
-          贷款余额：¥{{ formData.remaining_amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }}
+          贷款余额：¥{{ Math.round(formData.remaining_amount).toLocaleString('zh-CN') }}
         </div>
       </div>
       <form @submit.prevent="handleSubmit">

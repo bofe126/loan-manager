@@ -2,7 +2,7 @@
   <div class="app-container">
     <nav class="navbar navbar-dark">
       <div class="nav-container">
-        <router-link class="navbar-brand" to="/">LOAN</router-link>
+        <router-link class="navbar-brand" to="/">贷款助手</router-link>
         <div class="nav-links">
           <router-link class="nav-link" to="/">首页</router-link>
           <router-link class="nav-link" to="/loans">列表</router-link>
@@ -10,8 +10,10 @@
         </div>
       </div>
     </nav>
-    <router-view />
-    <footer class="app-footer">
+    <div class="main-content">
+      <router-view />
+    </div>
+    <footer v-if="$route.path === '/'" class="app-footer">
       <span class="footer-text">powered by jeffrey huang</span>
     </footer>
   </div>
@@ -23,19 +25,21 @@
 <style>
 /* 全局样式已在 style.css 中定义 */
 .app-container {
-  position: relative;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .app-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
   padding: 0.5rem 1rem;
-  z-index: 1;
-  pointer-events: none;
+  flex-shrink: 0;
 }
 
 .footer-text {
@@ -47,6 +51,7 @@
 }
 
 .navbar {
+  flex-shrink: 0;
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.4), inset 0 -1px 0 0 rgba(255, 255, 255, 0.08);

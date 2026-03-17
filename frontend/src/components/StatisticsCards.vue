@@ -8,7 +8,7 @@
           </div>
           <h2 class="stats-value">
             <span class="currency">¥</span>
-            {{ totalMonthlyPayment.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+            {{ Math.round(totalMonthlyPayment).toLocaleString('zh-CN') }}
           </h2>
           <div class="stats-footer">
             <span class="stats-label">MONTHLY PAYMENT</span>
@@ -24,7 +24,7 @@
           </div>
           <h2 class="stats-value">
             <span class="currency">¥</span>
-            {{ totalRemainingAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+            {{ Math.round(totalRemainingAmount).toLocaleString('zh-CN') }}
           </h2>
           <div class="stats-footer">
             <span class="stats-label">REMAINING BALANCE</span>

@@ -20,24 +20,32 @@
               <tr>
                 <th>期数</th>
                 <th>还款日期</th>
-                <th>本金</th>
-                <th>利息</th>
-                <th>剩余本金</th>
+                <th class="text-right">本金</th>
+                <th class="text-right">利息</th>
+                <th class="text-right">剩余本金</th>
                 <th>备注</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="detail in schedule" :key="detail.month">
-                <td>{{ detail.month }}</td>
-                <td>{{ formatDate(detail.payment_date) }}</td>
-                <td class="amount principal">¥{{ detail.principal.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }}</td>
-                <td class="amount interest">¥{{ detail.interest.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }}</td>
-                <td class="amount">¥{{ detail.remaining_balance.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }}</td>
-                <td>
-                  <span v-if="detail.note" class="note-text">{{ detail.note }}</span>
+              <tr v-for="detail in schedule" :key="detail.month" :class="{ 'extra-payment-row': detail.note }">
+                <td class="period-cell">{{ detail.month }}</td>
+                <td class="date-cell">{{ formatDate(detail.payment_date) }}</td>
+                <td class="amount principal">¥{{ Math.round(detail.principal).toLocaleString('zh-CN') }}</td>
+                <td class="amount interest">¥{{ Math.round(detail.interest).toLocaleString('zh-CN') }}</td>
+                <td class="amount balance">¥{{ Math.round(detail.remaining_balance).toLocaleString('zh-CN') }}</td>
+                <td class="note-cell">
+                  <span v-if="detail.note" class="note-badge">{{ detail.note }}</span>
                 </td>
               </tr>
             </tbody>
+            <tfoot v-if="schedule.length > 0">
+              <tr class="summary-row">
+                <td colspan="2" class="summary-label">合计</td>
+                <td class="amount summary-value">¥{{ Math.round(totalPrincipal).toLocaleString('zh-CN') }}</td>
+                <td class="amount summary-value">¥{{ Math.round(totalInterest).toLocaleString('zh-CN') }}</td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -49,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { GetPaymentSchedule } from '../../wailsjs/go/main/App';
 
 interface Props {
@@ -76,6 +84,14 @@ interface PaymentDetail {
 
 const schedule = ref<PaymentDetail[]>([]);
 const loading = ref(false);
+
+const totalPrincipal = computed(() => {
+  return schedule.value.reduce((sum, detail) => sum + detail.principal, 0);
+});
+
+const totalInterest = computed(() => {
+  return schedule.value.reduce((sum, detail) => sum + detail.interest, 0);
+});
 
 watch(() => props.show, async (newVal) => {
   if (newVal && props.loanId) {
@@ -185,55 +201,144 @@ const handleClose = () => {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  table-layout: fixed;
 }
 
 .schedule-table thead {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .schedule-table th {
-  padding: 0.75rem;
+  padding: 0.625rem 0.75rem;
   font-weight: 600;
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   white-space: nowrap;
-  border-bottom: 1px solid var(--glass-border);
-  text-align: left;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  text-align: center;
+}
+
+.schedule-table th:nth-child(1) { width: 8%; }   /* 期数 */
+.schedule-table th:nth-child(2) { width: 14%; }  /* 还款日期 */
+.schedule-table th:nth-child(3) { width: 20%; }  /* 本金 */
+.schedule-table th:nth-child(4) { width: 20%; }  /* 利息 */
+.schedule-table th:nth-child(5) { width: 22%; }  /* 剩余本金 */
+.schedule-table th:nth-child(6) { width: 16%; }  /* 备注 */
+
+.schedule-table th.text-right {
+  text-align: right;
+  padding-right: 1rem;
 }
 
 .schedule-table tbody tr {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all var(--transition-base);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background var(--transition-base);
 }
 
 .schedule-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.schedule-table tbody tr.extra-payment-row {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 3px solid #10b981;
+}
+
+.schedule-table tbody tr.extra-payment-row:hover {
+  background: rgba(16, 185, 129, 0.12);
 }
 
 .schedule-table td {
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   color: var(--text-primary);
   white-space: nowrap;
+}
+
+.schedule-table td.period-cell {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
+.schedule-table td.date-cell {
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  font-size: 0.8125rem;
 }
 
 .schedule-table td.amount {
   font-family: var(--font-mono);
   text-align: right;
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+  padding-right: 1rem;
 }
 
 .schedule-table td.principal {
-  color: #0080ff;
+  color: #3b82f6;
+  font-weight: 600;
 }
 
 .schedule-table td.interest {
-  color: #fbbf24;
+  color: #f59e0b;
+  font-weight: 600;
 }
 
-.note-text {
-  font-size: 0.75rem;
-  color: #39ff14;
+.schedule-table td.balance {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.schedule-table td.note-cell {
+  text-align: center;
+}
+
+.note-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 4px;
+  letter-spacing: 0.025em;
+}
+
+.schedule-table tfoot {
+  border-top: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.schedule-table tfoot tr.summary-row {
+  background: rgba(0, 128, 255, 0.08);
+}
+
+.schedule-table tfoot td {
+  padding: 0.75rem 0.75rem;
+}
+
+.schedule-table tfoot td.summary-label {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: right;
+  padding-right: 1rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+}
+
+.schedule-table tfoot td.summary-value {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  font-family: var(--font-mono);
 }
 
 .modal-footer {
