@@ -13,6 +13,7 @@
           <router-link class="nav-link" to="/loans">列表</router-link>
           <router-link class="nav-link" to="/add">新增</router-link>
         </div>
+        <div class="drag-region"></div>
         <div class="window-controls">
           <button class="window-button minimize" @click="minimizeWindow" title="最小化">
             <svg width="12" height="12" viewBox="0 0 12 12">
@@ -194,6 +195,12 @@ const openGitHub = () => {
   list-style: none !important;
   flex-shrink: 0 !important;
   --wails-draggable: no-drag;
+}
+
+.drag-region {
+  flex: 1;
+  min-width: 100px;
+  --wails-draggable: drag;
 }
 
 .nav-link {
